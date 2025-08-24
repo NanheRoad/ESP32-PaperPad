@@ -34,7 +34,8 @@ const uint8_t PIN_EPD_PWR  = 26;  // 电源控制（可直接 3.3V）
 const uint8_t PIN_I2C_SDA = 17;
 const uint8_t PIN_I2C_SCL = 16;
 const uint8_t SHT30_ADDRESS = 0x44; // SHT30 默认地址
-const uint8_t RTC_ADDRESS   = 0x51; // PCF8563 地址
+const uint8_t RTC_ADDRESS   = 0x51; // BL8025C/PCF8563 地址
+
 
 // WIFI
 const char *WIFI_SSID     = "ssid";

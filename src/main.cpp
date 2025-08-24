@@ -14,11 +14,11 @@
 #include <Arduino.h>
 #include <Adafruit_SHT31.h>
 #include <Adafruit_Sensor.h>
-#include <PCF8563.h>
+#include <Wire.h>
+#include <pcf8563.h>
 #include <Preferences.h>
 #include <time.h>
 #include <WiFi.h>
-#include <Wire.h>
 
 #include "_locale.h"
 #include "api_response.h"
@@ -37,7 +37,8 @@
 // 太大，无法在栈上分配
 static owm_resp_onecall_t       weather_data;
 static owm_resp_air_pollution_t owm_air_pollution;
-static PCF8563 rtc; // 外部 RTC
+// 使用 lewisxhe/PCF8563_Library 驱动 BL8025C 实时时钟
+static PCF8563_Class rtc; // 外部 RTC
 
 Preferences prefs;
 
