@@ -17,6 +17,12 @@
 #include <cstdint>
 #include <Arduino.h>
 
+
+// 若核心未定义板载 LED，引脚默认使用 GPIO2
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2
+#endif
+
 // 电子墨水屏面板
 // 支持以下型号：
 //   DISP_BW_V2 - 7.5" 黑白 800x480px

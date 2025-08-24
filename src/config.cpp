@@ -20,7 +20,8 @@
 // 注意：LED_BUILTIN 引脚将被禁用以降低功耗。请参考你的开发板引脚图，确保避免使用具有该共享功能的引脚。
 //
 // 用于测量电池电压的 ADC 引脚
-const uint8_t PIN_BAT_ADC  = A2; // micro-usb firebeetle 用 A0
+// ESP32 DevKit 模块未定义 A0/A2 等别名，这里使用 GPIO35 作为模拟输入
+const uint8_t PIN_BAT_ADC  = 35;
 // E-Paper 驱动板引脚
 const uint8_t PIN_EPD_BUSY = 14;  // EPD_BUSY
 const uint8_t PIN_EPD_CS   = 13;  // EPD_CS
@@ -35,7 +36,6 @@ const uint8_t PIN_I2C_SDA = 17;
 const uint8_t PIN_I2C_SCL = 16;
 const uint8_t SHT30_ADDRESS = 0x44; // SHT30 默认地址
 const uint8_t RTC_ADDRESS   = 0x51; // BL8025C/PCF8563 地址
-
 
 // WIFI
 const char *WIFI_SSID     = "ssid";

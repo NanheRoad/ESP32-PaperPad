@@ -70,7 +70,7 @@ DeserializationError deserializeCMAWeather(WiFiClient &json,
     return error;
   }
 
-  JsonObject root = doc;
+  JsonObject root = doc.as<JsonObject>();
 
   // 当前天气
   r.current.temp       = root["tem"].as<float>();
