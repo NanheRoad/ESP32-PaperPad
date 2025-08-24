@@ -1,18 +1,13 @@
-/* API response deserialization declarations for esp32-weather-epd.
+/* esp32-weather-epd API 响应解析声明。
  * Copyright (C) 2022-2023  Luke Marzen
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * 本程序为自由软件：你可以根据 GNU GPL v3.0 或其任一后续版本
+ * 重新分发和/或修改本程序。
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * 本程序按“原样”提供，不附带任何明示或暗示的担保。
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * 你应已收到 GNU 通用公共许可证的副本，
+ * 若没有，请查看 <https://www.gnu.org/licenses/>。
  */
 
 #ifndef __API_RESPONSE_H__
@@ -25,163 +20,144 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 
-#define OWM_NUM_MINUTELY       1 // 61
-#define OWM_NUM_HOURLY        48 // 48
-#define OWM_NUM_DAILY          8 // 8
-#define OWM_NUM_ALERTS         8 // OpenWeatherMaps does not specify a limit, but if you need more alerts you are probably doomed.
-#define OWM_NUM_AIR_POLLUTION 24 // Depending on AQI scale, hourly concentrations will need to be averaged over a period of 1h to 24h
+#define OWM_NUM_MINUTELY       1  // 最多 1 条逐分钟数据（保留）
+#define OWM_NUM_HOURLY        48  // 最多 48 条逐小时数据
+#define OWM_NUM_DAILY          8  // 最多 8 天预报
+#define OWM_NUM_ALERTS         8  // 最多 8 条天气警报
+#define OWM_NUM_AIR_POLLUTION 24  // 空气质量小时数据数量
 
 typedef struct owm_weather
 {
-  int     id;               // Weather condition id
-  String  main;             // Group of weather parameters (Rain, Snow, Extreme etc.)
-  String  description;      // Weather condition within the group (full list of weather conditions). Get the output in your language
-  String  icon;             // Weather icon id.
+  int     id;               // 天气现象 ID
+  String  main;             // 天气大类（雨、雪等）
+  String  description;      // 具体描述
+  String  icon;             // 图标 ID
 } owm_weather_t;
 
 /*
- * Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
+ * 温度单位：默认开尔文；公制摄氏；英制华氏。
  */
 typedef struct owm_temp
 {
-  float   morn;             // Morning temperature.
-  float   day;              // Day temperature.
-  float   eve;              // Evening temperature.
-  float   night;            // Night temperature.
-  float   min;              // Min daily temperature.
-  float   max;              // Max daily temperature.
+  float   morn;             // 早晨温度
+  float   day;              // 白天温度
+  float   eve;              // 傍晚温度
+  float   night;            // 夜间温度
+  float   min;              // 日最低温
+  float   max;              // 日最高温
 } owm_temp_t;
 
 /*
- * This accounts for the human perception of weather. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
+ * 体感温度，反映人体对天气的感知。单位同上。
  */
 typedef struct owm_feels_like
 {
-  float   morn;             // Morning temperature.
-  float   day;              // Day temperature.
-  float   eve;              // Evening temperature.
-  float   night;            // Night temperature.
+  float   morn;             // 早晨体感温度
+  float   day;              // 白天体感温度
+  float   eve;              // 傍晚体感温度
+  float   night;            // 夜间体感温度
 } owm_owm_feels_like_t;
 
-/*
- * Current weather data API response
- */
+/* 当前天气数据 */
 typedef struct owm_current
 {
-  int64_t dt;               // Current time, Unix, UTC
-  int64_t sunrise;          // Sunrise time, Unix, UTC
-  int64_t sunset;           // Sunset time, Unix, UTC
-  float   temp;             // Temperature. Units - default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  float   feels_like;       // Temperature. This temperature parameter accounts for the human perception of weather. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  int     pressure;         // Atmospheric pressure on the sea level, hPa
-  int     humidity;         // Humidity, %
-  float   dew_point;        // Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  int     clouds;           // Cloudiness, %
-  float   uvi;              // Current UV index
-  int     visibility;       // Average visibility, metres. The maximum value of the visibility is 10km
-  float   wind_speed;       // Wind speed. Wind speed. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  float   wind_gust;        // (where available) Wind gust. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  int     wind_deg;         // Wind direction, degrees (meteorological)
-  float   rain_1h;          // (where available) Rain volume for last hour, mm
-  float   snow_1h;          // (where available) Snow volume for last hour, mm
-  owm_weather_t         weather;
+  int64_t dt;               // 数据时间（Unix, UTC）
+  int64_t sunrise;          // 日出时间
+  int64_t sunset;           // 日落时间
+  float   temp;             // 温度
+  float   feels_like;       // 体感温度
+  int     humidity;         // 相对湿度 %
+  float   dew_point;        // 露点温度
+  int     clouds;           // 云量 %
+  float   uvi;              // UV 指数
+  int     visibility;       // 能见度 米
+  float   wind_speed;       // 风速
+  float   wind_gust;        // 阵风
+  int     wind_deg;         // 风向 度
+  float   rain_1h;          // 最近1小时降雨量 mm
+  float   snow_1h;          // 最近1小时降雪量 mm
+  owm_weather_t         weather; // 天气描述
 } owm_current_t;
 
-/*
- * Minute forecast weather data API response
- */
+/* 逐分钟预报数据 */
 typedef struct owm_minutely
 {
-  int64_t dt;               // Time of the forecasted data, unix, UTC
-  float   precipitation;    // Precipitation volume, mm
+  int64_t dt;               // 时间
+  float   precipitation;    // 降水量 mm
 } owm_minutely_t;
 
-/*
- * Hourly forecast weather data API response
- */
+/* 逐小时预报数据 */
 typedef struct owm_hourly
 {
-  int64_t dt;               // Time of the forecasted data, unix, UTC
-  float   temp;             // Temperature. Units - default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  float   feels_like;       // Temperature. This temperature parameter accounts for the human perception of weather. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  int     pressure;         // Atmospheric pressure on the sea level, hPa
-  int     humidity;         // Humidity, %
-  float   dew_point;        // Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  int     clouds;           // Cloudiness, %
-  float   uvi;              // Current UV index
-  int     visibility;       // Average visibility, metres. The maximum value of the visibility is 10km
-  float   wind_speed;       // Wind speed. Wind speed. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  float   wind_gust;        // (where available) Wind gust. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  int     wind_deg;         // Wind direction, degrees (meteorological)
-  float   pop;              // Probability of precipitation. The values of the parameter vary between 0 and 1, where 0 is equal to 0%, 1 is equal to 100%
-  float   rain_1h;          // (where available) Rain volume for last hour, mm
-  float   snow_1h;          // (where available) Snow volume for last hour, mm
-  owm_weather_t         weather;
+  int64_t dt;               // 时间
+  float   temp;             // 温度
+  float   feels_like;       // 体感温度
+  int     humidity;         // 相对湿度 %
+  float   dew_point;        // 露点
+  int     clouds;           // 云量 %
+  float   uvi;              // UV 指数
+  int     visibility;       // 能见度 米
+  float   wind_speed;       // 风速
+  float   wind_gust;        // 阵风
+  int     wind_deg;         // 风向 度
+  float   pop;              // 降水概率 [0,1]
+  float   rain_1h;          // 最近1小时降雨量 mm
+  float   snow_1h;          // 最近1小时降雪量 mm
+  owm_weather_t         weather; // 天气描述
 } owm_hourly_t;
 
-/*
- * Daily forecast weather data API response
- */
+/* 每日预报数据 */
 typedef struct owm_daily
 {
-  int64_t dt;               // Time of the forecasted data, unix, UTC
-  int64_t sunrise;          // Sunrise time, Unix, UTC
-  int64_t sunset;           // Sunset time, Unix, UTC
-  int64_t moonrise;         // The time of when the moon rises for this day, Unix, UTC
-  int64_t moonset;          // The time of when the moon sets for this day, Unix, UTC
-  float   moon_phase;       // Moon phase. 0 and 1 are 'new moon', 0.25 is 'first quarter moon', 0.5 is 'full moon' and 0.75 is 'last quarter moon'. The periods in between are called 'waxing crescent', 'waxing gibous', 'waning gibous', and 'waning crescent', respectively.
-  owm_temp_t            temp;
-  owm_owm_feels_like_t  feels_like;
-  int     pressure;         // Atmospheric pressure on the sea level, hPa
-  int     humidity;         // Humidity, %
-  float   dew_point;        // Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units – default: kelvin, metric: Celsius, imperial: Fahrenheit.
-  int     clouds;           // Cloudiness, %
-  float   uvi;              // Current UV index
-  int     visibility;       // Average visibility, metres. The maximum value of the visibility is 10km
-  float   wind_speed;       // Wind speed. Wind speed. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  float   wind_gust;        // (where available) Wind gust. Units – default: metre/sec, metric: metre/sec, imperial: miles/hour.
-  int     wind_deg;         // Wind direction, degrees (meteorological)
-  float   pop;              // Probability of precipitation. The values of the parameter vary between 0 and 1, where 0 is equal to 0%, 1 is equal to 100%
-  float   rain;             // (where available) Precipitation volume, mm
-  float   snow;             // (where available) Snow volume, mm
-  owm_weather_t         weather;
+  int64_t dt;               // 时间
+  int64_t sunrise;          // 日出时间
+  int64_t sunset;           // 日落时间
+  int64_t moonrise;         // 月升时间
+  int64_t moonset;          // 月落时间
+  float   moon_phase;       // 月相
+  owm_temp_t            temp;       // 温度信息
+  owm_owm_feels_like_t  feels_like; // 体感温度
+  int     humidity;         // 相对湿度 %
+  float   dew_point;        // 露点
+  int     clouds;           // 云量 %
+  float   uvi;              // UV 指数
+  int     visibility;       // 能见度 米
+  float   wind_speed;       // 风速
+  float   wind_gust;        // 阵风
+  int     wind_deg;         // 风向 度
+  float   pop;              // 降水概率 [0,1]
+  float   rain;             // 降雨量 mm
+  float   snow;             // 降雪量 mm
+  owm_weather_t         weather;   // 天气描述
 } owm_daily_t;
 
-/*
- * National weather alerts data from major national weather warning systems
- */
+/* 国家级天气警报数据 */
 typedef struct owm_alerts
 {
-  String  sender_name;      // Name of the alert source.
-  String  event;            // Alert event name
-  int64_t start;            // Date and time of the start of the alert, Unix, UTC
-  int64_t end;              // Date and time of the end of the alert, Unix, UTC
-  String  description;      // Description of the alert
-  String  tags;             // Type of severe weather
+  String  sender_name;      // 发布机构
+  String  event;            // 事件名称
+  int64_t start;            // 警报开始时间
+  int64_t end;              // 警报结束时间
+  String  description;      // 详细描述
+  String  tags;             // 天气类型
 } owm_alerts_t;
 
-/*
- * Response from OpenWeatherMap's OneCall API
- *
- * https://openweathermap.org/api/one-call-api
- */
+/* 综合天气响应结构 */
 typedef struct owm_resp_onecall
 {
-  float   lat;              // Geographical coordinates of the location (latitude)
-  float   lon;              // Geographical coordinates of the location (longitude)
-  String  timezone;         // Timezone name for the requested location
-  int     timezone_offset;  // Shift in seconds from UTC
-  owm_current_t   current;
-  // owm_minutely_t  minutely[OWM_NUM_MINUTELY];
+  float   lat;              // 纬度
+  float   lon;              // 经度
+  String  timezone;         // 时区名称
+  int     timezone_offset;  // 与 UTC 偏移秒数
+  owm_current_t   current;  // 当前天气
+  // owm_minutely_t  minutely[OWM_NUM_MINUTELY]; // 逐分钟数据
 
-  owm_hourly_t    hourly[OWM_NUM_HOURLY];
-  owm_daily_t     daily[OWM_NUM_DAILY];
-  std::vector<owm_alerts_t> alerts;
+  owm_hourly_t    hourly[OWM_NUM_HOURLY]; // 小时预报
+  owm_daily_t     daily[OWM_NUM_DAILY];   // 日预报
+  std::vector<owm_alerts_t> alerts;       // 警报列表
 } owm_resp_onecall_t;
 
-/*
- * Coordinates from the specified location (latitude, longitude)
- */
+/* 地理坐标 */
 typedef struct owm_coord
 {
   float   lat;
@@ -190,29 +166,27 @@ typedef struct owm_coord
 
 typedef struct owm_components
 {
-  float   co[OWM_NUM_AIR_POLLUTION];    // Сoncentration of CO (Carbon monoxide), μg/m^3
-  float   no[OWM_NUM_AIR_POLLUTION];    // Сoncentration of NO (Nitrogen monoxide), μg/m^3
-  float   no2[OWM_NUM_AIR_POLLUTION];   // Сoncentration of NO2 (Nitrogen dioxide), μg/m^3
-  float   o3[OWM_NUM_AIR_POLLUTION];    // Сoncentration of O3 (Ozone), μg/m^3
-  float   so2[OWM_NUM_AIR_POLLUTION];   // Сoncentration of SO2 (Sulphur dioxide), μg/m^3
-  float   pm2_5[OWM_NUM_AIR_POLLUTION]; // Сoncentration of PM2.5 (Fine particles matter), μg/m^3
-  float   pm10[OWM_NUM_AIR_POLLUTION];  // Сoncentration of PM10 (Coarse particulate matter), μg/m^3
-  float   nh3[OWM_NUM_AIR_POLLUTION];   // Сoncentration of NH3 (Ammonia), μg/m^3
+  float   co[OWM_NUM_AIR_POLLUTION];    // 一氧化碳 CO μg/m^3
+  float   no[OWM_NUM_AIR_POLLUTION];    // 一氧化氮 NO μg/m^3
+  float   no2[OWM_NUM_AIR_POLLUTION];   // 二氧化氮 NO2 μg/m^3
+  float   o3[OWM_NUM_AIR_POLLUTION];    // 臭氧 O3 μg/m^3
+  float   so2[OWM_NUM_AIR_POLLUTION];   // 二氧化硫 SO2 μg/m^3
+  float   pm2_5[OWM_NUM_AIR_POLLUTION]; // PM2.5 μg/m^3
+  float   pm10[OWM_NUM_AIR_POLLUTION];  // PM10 μg/m^3
+  float   nh3[OWM_NUM_AIR_POLLUTION];   // 氨气 NH3 μg/m^3
 } owm_components_t;
 
-/*
- * Response from OpenWeatherMap's Air Pollution API
- */
+/* 空气质量响应结构 */
 typedef struct owm_resp_air_pollution
 {
-  owm_coord_t      coord;
-  int              main_aqi[OWM_NUM_AIR_POLLUTION];   // Air Quality Index. Possible values: 1, 2, 3, 4, 5. Where 1 = Good, 2 = Fair, 3 = Moderate, 4 = Poor, 5 = Very Poor.
-  owm_components_t components;
-  int64_t          dt[OWM_NUM_AIR_POLLUTION];         // Date and time, Unix, UTC;
+  owm_coord_t      coord;                             // 坐标
+  int              main_aqi[OWM_NUM_AIR_POLLUTION];   // AQI 等级 1-5
+  owm_components_t components;                        // 污染物浓度
+  int64_t          dt[OWM_NUM_AIR_POLLUTION];         // 时间戳
 } owm_resp_air_pollution_t;
 
-DeserializationError deserializeOneCall(WiFiClient &json,
-                                        owm_resp_onecall_t &r);
+DeserializationError deserializeCMAWeather(WiFiClient &json,
+                                           owm_resp_onecall_t &r);
 DeserializationError deserializeAirQuality(WiFiClient &json,
                                            owm_resp_air_pollution_t &r);
 
