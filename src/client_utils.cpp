@@ -44,9 +44,9 @@
 #endif
 
 #ifdef USE_HTTP
-  static const uint16_t OWM_PORT = 80;
+  static const uint16_t CMA_PORT = 80;
 #else
-  static const uint16_t OWM_PORT = 443;
+  static const uint16_t CMA_PORT = 443;
 #endif
 
 /* Power-on and connect WiFi.
@@ -137,34 +137,29 @@ bool waitForSNTPSync(tm *timeInfo)
   return printLocalTime(timeInfo);
 } // waitForSNTPSync
 
-/* Perform an HTTP GET request to OpenWeatherMap's "One Call" API
- * If data is received, it will be parsed and stored in the global variable
- * owm_onecall.
+/* 调用中国气象台天气预报 API。
+ * 若接收到数据，将解析并存入 r。
  *
- * Returns the HTTP Status Code.
+ * 返回 HTTP 状态码。
  */
 #ifdef USE_HTTP
-  int getOWMonecall(WiFiClient &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClient &client, owm_resp_onecall_t &r)
 #else
-  int getOWMonecall(WiFiClientSecure &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClientSecure &client, owm_resp_onecall_t &r)
 #endif
 {
   int attempts = 0;
   bool rxSuccess = false;
   DeserializationError jsonErr = {};
-  String uri = "/data/" + OWM_ONECALL_VERSION
-               + "/onecall?lat=" + LAT + "&lon=" + LON + "&lang=" + OWM_LANG
-               + "&units=standard&exclude=minutely";
-#if !DISPLAY_ALERTS
-  // exclude alerts
-  uri += ",alerts";
-#endif
+  // 构造请求 URI
+  String uri = String("/api/tianqi/tqyb.php?pid=") + CMA_PID + "&key=" + CMA_KEY
+               + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
+               + "&place=" + CMA_PLACE;
 
-  // This string is printed to terminal to help with debugging. The API key is
-  // censored to reduce the risk of users exposing their key.
-  String sanitizedUri = OWM_ENDPOINT + uri + "&appid={API key}";
-
-  uri += "&appid=" + OWM_APIKEY;
+  String sanitizedUri = String(CMA_ENDPOINT) +
+                        "/api/tianqi/tqyb.php?pid=" + CMA_PID + "&key={KEY}"
+                        + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
+                        + "&place=" + CMA_PLACE;
 
   Serial.print(TXT_ATTEMPTING_HTTP_REQ);
   Serial.println(": " + sanitizedUri);
@@ -181,11 +176,11 @@ bool waitForSNTPSync(tm *timeInfo)
     HTTPClient http;
     http.setConnectTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
     http.setTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
-    http.begin(client, OWM_ENDPOINT, OWM_PORT, uri);
+    http.begin(client, CMA_ENDPOINT, CMA_PORT, uri);
     httpResponse = http.GET();
     if (httpResponse == HTTP_CODE_OK)
     {
-      jsonErr = deserializeOneCall(http.getStream(), r);
+      jsonErr = deserializeCMAWeather(http.getStream(), r);
       if (jsonErr)
       {
         // -256 offset distinguishes these errors from httpClient errors
@@ -201,7 +196,7 @@ bool waitForSNTPSync(tm *timeInfo)
   }
 
   return httpResponse;
-} // getOWMonecall
+} // getCMAweather
 
 /* Perform an HTTP GET request to OpenWeatherMap's "Air Pollution" API
  * If data is received, it will be parsed and stored in the global variable
@@ -231,13 +226,13 @@ bool waitForSNTPSync(tm *timeInfo)
   sprintf(startStr, "%lld", start);
   String uri = "/data/2.5/air_pollution/history?lat=" + LAT + "&lon=" + LON
                + "&start=" + startStr + "&end=" + endStr
-               + "&appid=" + OWM_APIKEY;
+               + "&appcode=" + CMA_KEY;
   // This string is printed to terminal to help with debugging. The API key is
   // censored to reduce the risk of users exposing their key.
-  String sanitizedUri = OWM_ENDPOINT +
+  String sanitizedUri = CMA_ENDPOINT +
                "/data/2.5/air_pollution/history?lat=" + LAT + "&lon=" + LON
                + "&start=" + startStr + "&end=" + endStr
-               + "&appid={API key}";
+               + "&appcode={KEY}";
 
   Serial.print(TXT_ATTEMPTING_HTTP_REQ);
   Serial.println(": " + sanitizedUri);
@@ -254,7 +249,7 @@ bool waitForSNTPSync(tm *timeInfo)
     HTTPClient http;
     http.setConnectTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
     http.setTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
-    http.begin(client, OWM_ENDPOINT, OWM_PORT, uri);
+    http.begin(client, CMA_ENDPOINT, CMA_PORT, uri);
     httpResponse = http.GET();
     if (httpResponse == HTTP_CODE_OK)
     {
