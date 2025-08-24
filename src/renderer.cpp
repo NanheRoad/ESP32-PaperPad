@@ -342,12 +342,10 @@ void drawCurrentConditions(const owm_current_t &current,
                              wi_sunset_48x48, 48, 48, GxEPD_BLACK);
   display.drawInvertedBitmap(170, 204 + (48 + 8) * 1,
                              wi_humidity_48x48, 48, 48, GxEPD_BLACK);
-  display.drawInvertedBitmap(170, 204 + (48 + 8) * 2,
-                             wi_barometer_48x48, 48, 48, GxEPD_BLACK);
 #ifndef DISP_BW_V1
-  display.drawInvertedBitmap(170, 204 + (48 + 8) * 3,
+  display.drawInvertedBitmap(170, 204 + (48 + 8) * 2,
                              visibility_icon_48x48, 48, 48, GxEPD_BLACK);
-  display.drawInvertedBitmap(170, 204 + (48 + 8) * 4,
+  display.drawInvertedBitmap(170, 204 + (48 + 8) * 3,
                              house_humidity_48x48, 48, 48, GxEPD_BLACK);
 #endif
 
@@ -371,10 +369,9 @@ void drawCurrentConditions(const owm_current_t &current,
 #endif
   drawString(170 + 48, 204 + 10 + (48 + 8) * 0, TXT_SUNSET, LEFT);
   drawString(170 + 48, 204 + 10 + (48 + 8) * 1, TXT_HUMIDITY, LEFT);
-  drawString(170 + 48, 204 + 10 + (48 + 8) * 2, TXT_PRESSURE, LEFT);
 #ifndef DISP_BW_V1
-  drawString(170 + 48, 204 + 10 + (48 + 8) * 3, TXT_VISIBILITY, LEFT);
-  drawString(170 + 48, 204 + 10 + (48 + 8) * 4, TXT_INDOOR_HUMIDITY, LEFT);
+  drawString(170 + 48, 204 + 10 + (48 + 8) * 2, TXT_VISIBILITY, LEFT);
+  drawString(170 + 48, 204 + 10 + (48 + 8) * 3, TXT_INDOOR_HUMIDITY, LEFT);
 #endif
 
   // sunrise
@@ -561,58 +558,8 @@ void drawCurrentConditions(const owm_current_t &current,
   drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 1 + 48 / 2,
              "%", LEFT);
 
-  // pressure
-#ifdef UNITS_PRES_HECTOPASCALS
-  dataStr = String(current.pressure);
-  unitStr = String(" ") + TXT_UNITS_PRES_HECTOPASCALS;
-#endif
-#ifdef UNITS_PRES_PASCALS
-  dataStr = String(static_cast<int>(std::round(
-                   hectopascals_to_pascals(current.pressure) )));
-  unitStr = String(" ") + TXT_UNITS_PRES_PASCALS;
-#endif
-#ifdef UNITS_PRES_MILLIMETERSOFMERCURY
-  dataStr = String(static_cast<int>(std::round(
-                   hectopascals_to_millimetersofmercury(current.pressure) )));
-  unitStr = String(" ") + TXT_UNITS_PRES_MILLIMETERSOFMERCURY;
-#endif
-#ifdef UNITS_PRES_INCHESOFMERCURY
-  dataStr = String(std::round(1e1f *
-                   hectopascals_to_inchesofmercury(current.pressure)
-                   ) / 1e1f, 1);
-  unitStr = String(" ") + TXT_UNITS_PRES_INCHESOFMERCURY;
-#endif
-#ifdef UNITS_PRES_MILLIBARS
-  dataStr = String(static_cast<int>(std::round(
-                   hectopascals_to_millibars(current.pressure) )));
-  unitStr = String(" ") + TXT_UNITS_PRES_MILLIBARS;
-#endif
-#ifdef UNITS_PRES_ATMOSPHERES
-  dataStr = String(std::round(1e3f *
-                   hectopascals_to_atmospheres(current.pressure) )
-                   / 1e3f, 3);
-  unitStr = String(" ") + TXT_UNITS_PRES_ATMOSPHERES;
-#endif
-#ifdef UNITS_PRES_GRAMSPERSQUARECENTIMETER
-  dataStr = String(static_cast<int>(std::round(
-                   hectopascals_to_gramspersquarecentimeter(current.pressure)
-                   )));
-  unitStr = String(" ") + TXT_UNITS_PRES_GRAMSPERSQUARECENTIMETER;
-#endif
-#ifdef UNITS_PRES_POUNDSPERSQUAREINCH
-  dataStr = String(std::round(1e2f *
-                   hectopascals_to_poundspersquareinch(current.pressure)
-                   ) / 1e2f, 2);
-  unitStr = String(" ") + TXT_UNITS_PRES_POUNDSPERSQUAREINCH;
-#endif
-  display.setFont(&FONT_12pt8b);
-  drawString(170 + 48, 204 + 17 / 2 + (48 + 8) * 2 + 48 / 2, dataStr, LEFT);
-  display.setFont(&FONT_8pt8b);
-  drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 2 + 48 / 2,
-             unitStr, LEFT);
-
-#ifndef DISP_BW_V1
   // visibility
+#ifndef DISP_BW_V1
   display.setFont(&FONT_12pt8b);
 #ifdef UNITS_DIST_KILOMETERS
   float vis = meters_to_kilometers(current.visibility);
@@ -642,9 +589,9 @@ void drawCurrentConditions(const owm_current_t &current,
 #endif
     dataStr = "> " + dataStr;
   }
-  drawString(170 + 48, 204 + 17 / 2 + (48 + 8) * 3 + 48 / 2, dataStr, LEFT);
+  drawString(170 + 48, 204 + 17 / 2 + (48 + 8) * 2 + 48 / 2, dataStr, LEFT);
   display.setFont(&FONT_8pt8b);
-  drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 3 + 48 / 2,
+  drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 2 + 48 / 2,
              unitStr, LEFT);
 
   // indoor humidity
@@ -657,10 +604,10 @@ void drawCurrentConditions(const owm_current_t &current,
   {
     dataStr = "--";
   }
-  drawString(170 + 48, 204 + 17 / 2 + (48 + 8) * 4 + 48 / 2, dataStr, LEFT);
-  display.setFont(&FONT_8pt8b);
-  drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 4 + 48 / 2,
-             "%", LEFT);
+    drawString(170 + 48, 204 + 17 / 2 + (48 + 8) * 3 + 48 / 2, dataStr, LEFT);
+    display.setFont(&FONT_8pt8b);
+    drawString(display.getCursorX(), 204 + 17 / 2 + (48 + 8) * 3 + 48 / 2,
+               "%", LEFT);
 #endif // defined(DISP_BW_V2) || defined(DISP_3C_B) || defined(DISP_7C_F)
   return;
 } // end drawCurrentConditions
