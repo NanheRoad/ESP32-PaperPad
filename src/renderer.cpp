@@ -26,15 +26,10 @@
 // fonts
 #include FONT_HEADER
 
-// icon header files
-#include "icons/icons_16x16.h"
+// icon header files - only include the ones actually used
 #include "icons/icons_24x24.h"
 #include "icons/icons_32x32.h"
 #include "icons/icons_48x48.h"
-#include "icons/icons_64x64.h"
-#include "icons/icons_96x96.h"
-#include "icons/icons_128x128.h"
-#include "icons/icons_160x160.h"
 #include "icons/icons_196x196.h"
 
 #ifdef DISP_BW_V2
