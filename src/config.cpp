@@ -20,7 +20,8 @@
 // 注意：LED_BUILTIN 引脚将被禁用以降低功耗。请参考你的开发板引脚图，确保避免使用具有该共享功能的引脚。
 //
 // 用于测量电池电压的 ADC 引脚
-const uint8_t PIN_BAT_ADC  = A2; // micro-usb firebeetle 用 A0
+// ESP32 DevKit 模块未定义 A0/A2 等别名，这里使用 GPIO35 作为模拟输入
+const uint8_t PIN_BAT_ADC  = 35;
 // E-Paper 驱动板引脚
 const uint8_t PIN_EPD_BUSY = 14;  // EPD_BUSY
 const uint8_t PIN_EPD_CS   = 13;  // EPD_CS
@@ -30,11 +31,11 @@ const uint8_t PIN_EPD_SCK  = 18;  // EPD_CLK
 const uint8_t PIN_EPD_MISO = 19;  // SPI MISO (未使用)
 const uint8_t PIN_EPD_MOSI = 23;  // EPD_DIN
 const uint8_t PIN_EPD_PWR  = 26;  // 电源控制（可直接 3.3V）
-// BME280 用的 I2C 引脚
-const uint8_t PIN_BME_SDA = 17;
-const uint8_t PIN_BME_SCL = 16;
-const uint8_t PIN_BME_PWR =  4;   // 若直接接 3.3V 则无关紧要
-const uint8_t BME_ADDRESS = 0x76; // 若传感器无法工作，可尝试 0x77
+// I2C 引脚（SHT30 温湿度传感器与 RTC 共用）
+const uint8_t PIN_I2C_SDA = 17;
+const uint8_t PIN_I2C_SCL = 16;
+const uint8_t SHT30_ADDRESS = 0x44; // SHT30 默认地址
+const uint8_t RTC_ADDRESS   = 0x51; // BL8025C/PCF8563 地址
 
 // WIFI
 const char *WIFI_SSID     = "ssid";
@@ -48,20 +49,14 @@ const unsigned long WIFI_TIMEOUT = 10000; // 毫秒，WiFi 连接超时时间
 //   -258 反序列化输入不完整
 const unsigned HTTP_CLIENT_TCP_TIMEOUT = 10000; // 毫秒
 
-// OPENWEATHERMAP API
-// OpenWeatherMap API 密钥，https://openweathermap.org/
-const String OWM_APIKEY   = "abcdefghijklmnopqrstuvwxyz012345";
-const String OWM_ENDPOINT = "api.openweathermap.org";
-// OpenWeatherMap One Call 2.5 API 已对所有新免费用户（2022 夏后注册账号）弃用。
-//
-// 请注意，One Call API 3.0 仅包含在 "One Call by Call" 订阅中。
-// 该订阅每天免费 1,000 次调用，仅按实际调用次数付费。
-//
-// 订阅方法如下，可避免信用卡扣费：
-// - 访问 https://home.openweathermap.org/subscriptions/billing_info/onecall_30/base?key=base&service=onecall_30
-// - 按提示完成订阅。
-// - 访问 https://home.openweathermap.org/subscriptions 并将 "Calls per day (no more than)" 设置为 1,000，确保不会超出免费额度。
-const String OWM_ONECALL_VERSION = "3.0";
+// 中国气象台 API
+// 参考：https://cn.apihz.cn/api/tianqi/tqyb.php
+const String CMA_PID      = "your_pid";        // 用户 PID
+const String CMA_KEY      = "your_key";        // 用户 KEY
+const String CMA_PROVINCE = "省份";           // 省
+const String CMA_CITY     = "城市";           // 市
+const String CMA_PLACE    = "区县";           // 区/县
+const String CMA_ENDPOINT = "cn.apihz.cn";    // 接口域名
 
 // 位置
 // 设置你的纬度和经度。
