@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <Arduino.h>
 
+
 // 若核心未定义板载 LED，引脚默认使用 GPIO2
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
