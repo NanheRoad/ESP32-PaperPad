@@ -1,6 +1,6 @@
 # ESP32 电子墨水屏天气显示器
 
-这是一个由支持WiFi的ESP32微控制器和7.5英寸电子墨水屏（E-Paper，又称E-ink）驱动的天气显示器。当前和预报的天气数据来自OpenWeatherMap API。传感器为显示器提供准确的室内温度和湿度。
+这是一个由支持WiFi的ESP32微控制器和7.5英寸电子墨水屏（E-Paper，又称E-ink）驱动的天气显示器。天气数据来自中国气象台 API，传感器为显示器提供准确的室内温度和湿度。
 
 <p float="left">
   <img src="showcase/assembled-demo-raleigh-front.jpg" />
@@ -30,7 +30,6 @@
     -   [硬件](#硬件)
     -   [接线](#接线)
     -   [配置、编译和上传](#配置编译和上传)
-    -   [OpenWeatherMap API密钥](#openweathermap-api密钥)
 -   [错误信息和故障排除](#错误信息和故障排除)
     -   [低电量](#低电量)
     -   [WiFi连接](#wifi连接)
@@ -239,19 +238,6 @@ VSCode的PlatformIO用于管理依赖项、代码编译和上传到ESP32。
       - 如果使用FireBeetle 2 ESP32-E并收到错误`Wrong boot mode detected (0x13)! The chip needs to be in download mode.`，请断开板子的电源，将GPIO0（[标记为0/D5](https://wiki.dfrobot.com/FireBeetle_Board_ESP32_E_SKU_DFR0654#target_5)）连接到GND，然后重新上电以将板子置于下载模式。
 
       - 如果在上传过程中遇到其他错误，您可能需要安装驱动程序以允许您向ESP32上传代码。
-### OpenWeatherMap API密钥
-
-在此注册获取API密钥；它是免费的。<https://openweathermap.org/api>
-
-此项目将调用2个不同的API（"One Call"和"Air Pollution"）。
-
-- One Call API 3.0仅包含在"One Call by Call"订阅中。这个独立的订阅每天免费包含1000次调用，并允许您只为对此产品进行的API调用数量付费。
-
-以下是订阅并避免任何信用卡收费的方法：
-   - 前往 <https://home.openweathermap.org/subscriptions/billing_info/onecall_30/base?key=base&service=onecall_30>
-   - 按照说明完成订阅。
-   - 前往 <https://home.openweathermap.org/subscriptions> 并将"每天调用次数（不超过）"设置为1000。这确保您永远不会超出免费调用次数。
-
 ## 错误信息和故障排除
 
 ### 低电量
@@ -268,7 +254,7 @@ VSCode的PlatformIO用于管理依赖项、代码编译和上传到ESP32。
 
 ### API错误
 <img src="showcase/demo-error-api.jpg" align="left" width="25%" />
-当向OpenWeatherMap发出API请求时发生错误（客户端或服务器）时，此错误屏幕会出现。第二行将给出错误代码和描述短语。正数错误代码对应HTTP响应状态代码，而错误代码<= 0表示客户端（esp32）错误。esp32将每隔SLEEP_DURATION（默认=30分钟）重试一次。
+当向天气服务发出 API 请求时发生错误（客户端或服务器）时，此错误屏幕会出现。第二行将给出错误代码和描述短语。正数错误代码对应 HTTP 响应状态代码，而错误代码 <= 0 表示客户端（esp32）错误。esp32 将每隔 SLEEP_DURATION（默认 = 30 分钟）重试一次。
 <br/><br/>
 在左侧显示的示例中，"401: Unauthorized"可能是API密钥不正确的结果，或者您在没有适当账户设置的情况下尝试使用One Call v3 API。
 

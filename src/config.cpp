@@ -60,7 +60,7 @@ const String CMA_ENDPOINT = "cn.apihz.cn";    // 接口域名
 
 // 位置
 // 设置你的纬度和经度。
-// （用于向 OpenWeatherMap API 请求天气数据）
+// （用于向中国气象台 API 请求天气数据）
 const String LAT = "40.7128";
 const String LON = "-74.0060";
 // 城市名称，将显示在屏幕右上角。
@@ -97,7 +97,7 @@ const unsigned long NTP_TIMEOUT = 20000; // 毫秒
 // 睡眠时长（分钟），即 esp32 唤醒更新的频率。
 // 对齐到最近的分钟边界。
 // 例如，设为 30（分钟），则显示将在每小时的 00 或 30 分钟更新。（范围：[2-1440]）
-// 注意：OpenWeatherMap 模型每 10 分钟更新一次，故无需更频繁刷新。
+// 注意：中国气象台数据更新频率约为 10 分钟，无需更频繁刷新。
 const int SLEEP_DURATION = 30; // 分钟
 // 睡眠时段省电设置。
 // 若 BED_TIME == WAKE_TIME，则该省电功能关闭。

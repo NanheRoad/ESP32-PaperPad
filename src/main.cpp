@@ -35,8 +35,7 @@
 #endif
 
 // 太大，无法在栈上分配
-static owm_resp_onecall_t       weather_data;
-static owm_resp_air_pollution_t owm_air_pollution;
+static cma_weather_t weather_data;
 // 使用 lewisxhe/PCF8563_Library 驱动 BL8025C 实时时钟
 static PCF8563_Class rtc; // 外部 RTC
 
@@ -106,9 +105,9 @@ void beginDeepSleep(unsigned long startTime, tm *timeInfo)
 
   esp_sleep_enable_timer_wakeup(sleepDuration * 1000000ULL);
   Serial.print(TXT_AWAKE_FOR);
-  Serial.println(" "  + String((millis() - startTime) / 1000.0, 3) + "s");
+  Serial.println(" "  + String((millis() - startTime) / 1000.0, 3) + "秒");
   Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-  Serial.println(" " + String(sleepDuration) + "s");
+  Serial.println(" " + String(sleepDuration) + "秒");
   esp_deep_sleep_start();
 } // end beginDeepSleep
 
@@ -135,7 +134,7 @@ void setup()
 #if BATTERY_MONITORING
   uint32_t batteryVoltage = readBatteryVoltage();
   Serial.print(TXT_BATTERY_VOLTAGE);
-  Serial.println(": " + String(batteryVoltage) + "mv");
+  Serial.println("：" + String(batteryVoltage) + "毫伏");
 
 
   // 当电池电量低时，应该刷新显示，但只在首次检测到低电压时刷新。
@@ -170,7 +169,7 @@ void setup()
                                     * 60ULL * 1000000ULL);
       Serial.println(TXT_VERY_LOW_BATTERY_VOLTAGE);
       Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-      Serial.println(" " + String(VERY_LOW_BATTERY_SLEEP_INTERVAL) + "min");
+      Serial.println(" " + String(VERY_LOW_BATTERY_SLEEP_INTERVAL) + "分钟");
     }
     else
     {  // 低电压
@@ -178,7 +177,7 @@ void setup()
                                     * 60ULL * 1000000ULL);
       Serial.println(TXT_LOW_BATTERY_VOLTAGE);
       Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-      Serial.println(" " + String(LOW_BATTERY_SLEEP_INTERVAL) + "min");
+      Serial.println(" " + String(LOW_BATTERY_SLEEP_INTERVAL) + "分钟");
     }
     esp_deep_sleep_start();
   }
@@ -255,8 +254,8 @@ void setup()
   if (rxStatus != HTTP_CODE_OK)
     {
       killWiFi();
-      statusStr = "CMA Weather API";
-      tmpStr = String(rxStatus, DEC) + ": " + getHttpResponsePhrase(rxStatus);
+      statusStr = "中国气象台 API";
+      tmpStr = String(rxStatus, DEC) + "：" + getHttpResponsePhrase(rxStatus);
     initDisplay();
     do
     {
@@ -306,14 +305,8 @@ void setup()
   initDisplay();
   do
   {
-    drawCurrentConditions(weather_data.current, weather_data.daily[0],
-                          owm_air_pollution, inTemp, inHumidity);
-    drawOutlookGraph(weather_data.hourly, weather_data.daily, timeInfo);
-    drawForecast(weather_data.daily, timeInfo);
+    drawCurrentWeather(weather_data, inTemp, inHumidity);
     drawLocationDate(CITY_STRING, dateStr);
-#if DISPLAY_ALERTS
-    drawAlerts(weather_data.alerts, CITY_STRING, dateStr);
-#endif
     drawStatusBar(statusStr, refreshTimeStr, wifiRSSI, batteryVoltage);
   } while (display.nextPage());
   powerOffDisplay();
