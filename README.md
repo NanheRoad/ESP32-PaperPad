@@ -1,6 +1,6 @@
 # ESP32 E-Paper Weather Display
 
-This is a weather display powered by a wifi-enabled ESP32 microcontroller and a 7.5in E-Paper (aka E-ink) display. Current and forecasted weather data is obtained from the OpenWeatherMap API. A sensor provides the display with accurate indoor temperature and humidity.
+This is a weather display powered by a wifi-enabled ESP32 microcontroller and a 7.5in E-Paper (aka E-ink) display. Weather data comes from the Chinese Meteorological Administration API. A sensor provides the display with accurate indoor temperature and humidity.
 
 <p float="left">
   <img src="showcase/assembled-demo-raleigh-front.jpg" />
@@ -30,7 +30,6 @@ Here are two examples utilizing various configuration options:
     -   [Hardware](#hardware)
     -   [Wiring](#wiring)
     -   [Configuration, Compilation, and Upload](#configuration-compilation-and-upload)
-    -   [OpenWeatherMap API Key](#openweathermap-api-key)
 -   [Error Messages and Troubleshooting](#error-messages-and-troubleshooting)
     -   [Low Battery](#low-battery)
     -   [WiFi Connection](#wifi-connection)
@@ -239,19 +238,6 @@ PlatformIO for VSCode is used for managing dependencies, code compilation, and u
       - If using a FireBeetle 2 ESP32-E and you receive the error `Wrong boot mode detected (0x13)! The chip needs to be in download mode.` unplug the power from the board, connect GPIO0 ([labeled 0/D5](https://wiki.dfrobot.com/FireBeetle_Board_ESP32_E_SKU_DFR0654#target_5)) to GND, and power it back up to put the board in download mode.
 
       - If you are getting other errors during the upload process, you may need to install drivers to allow you to upload code to the ESP32.
-### OpenWeatherMap API Key
-
-Sign up here to get an API key; it's free. <https://openweathermap.org/api>
-
-This project will make calls to 2 different APIs ("One Call" and "Air Pollution").
-
-- The One Call API 3.0 is only included in the "One Call by Call" subscription. This separate subscription includes 1,000 calls/day for free and allows you to pay only for the number of API calls made to this product.
-
-Here's how to subscribe and avoid any credit card changes:
-   - Go to <https://home.openweathermap.org/subscriptions/billing_info/onecall_30/base?key=base&service=onecall_30>
-   - Follow the instructions to complete the subscription.
-   - Go to <https://home.openweathermap.org/subscriptions> and set the "Calls per day (no more than)" to 1,000. This ensures you will never overrun the free calls.
-
 ## Error Messages and Troubleshooting
 
 ### Low Battery
@@ -268,7 +254,7 @@ This error screen appears when the ESP32 fails to connect to WiFi. If the messag
 
 ### API Error
 <img src="showcase/demo-error-api.jpg" align="left" width="25%" />
-This error screen appears if an error (client or server) occurs when making an API request to OpenWeatherMap. The second line will give the error code followed by a descriptor phrase. Positive error codes correspond to HTTP response status codes, while error codes <= 0 indicate a client(esp32) error. The esp32 will retry once every SLEEP_DURATION (default = 30min).
+This error screen appears if an error (client or server) occurs when making an API request to the weather service. The second line will give the error code followed by a descriptor phrase. Positive error codes correspond to HTTP response status codes, while error codes <= 0 indicate a client (esp32) error. The esp32 will retry once every SLEEP_DURATION (default = 30min).
 <br/><br/>
 In the example shown to the left, "401: Unauthorized" may be the result of an incorrect API key or that you are attempting to use the One Call v3 API without the proper account setup.
 
