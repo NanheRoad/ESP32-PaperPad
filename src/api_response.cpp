@@ -3,6 +3,7 @@
 #include "api_response.h"
 #include "config.h"
 
+
 // 若 API 未提供风向角度，则根据中文风向转换
 static int cnWindToDeg(const String &s)
 {
@@ -19,6 +20,7 @@ static int cnWindToDeg(const String &s)
 
 DeserializationError deserializeCMAWeather(WiFiClient &json,
                                            cma_weather_t &r)
+
 {
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, json);

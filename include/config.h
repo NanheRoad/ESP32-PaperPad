@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <Arduino.h>
 
+
 // 若核心未定义板载 LED，引脚默认使用 GPIO2
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
@@ -64,7 +65,9 @@
 //   意大利语（意大利）              it_IT
 //   荷兰语（比利时）                nl_BE
 //   葡萄牙语（巴西）                pt_BR
+
 #define LOCALE zh_CN
+
 
 // 单位设置
 // 每种度量类型只能定义一个宏。
@@ -195,15 +198,17 @@
 //   2 : 智能（仅在预测有降水时显示）
 #define DISPLAY_DAILY_PRECIP 0
 
+
 // 小时天气图标
 // 在温度/降水图上显示小时图标，绘制在 x 轴刻度处。
 //   0 : 禁用
 //   1 : 启用
-#define DISPLAY_HOURLY_ICONS 0
 
+#define DISPLAY_HOURLY_ICONS 0
 // 天气警报
 //   当前 API 不提供天气警报，故默认关闭。
 #define DISPLAY_ALERTS 0
+
 
 // 状态栏附加信息
 //   设置为 1 以显示额外信息。

@@ -196,6 +196,7 @@ bool waitForSNTPSync(tm *timeInfo)
   return httpResponse;
 } // getCMAweather
 
+
 /* Prints debug information about heap usage.
  */
 void printHeapUsage() {

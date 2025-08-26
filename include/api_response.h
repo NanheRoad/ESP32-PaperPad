@@ -1,4 +1,5 @@
 /* 中国气象台 API 响应结构声明 */
+
 #ifndef __API_RESPONSE_H__
 #define __API_RESPONSE_H__
 
