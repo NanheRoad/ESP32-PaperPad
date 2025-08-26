@@ -12,12 +12,13 @@
  */
 
 #include <Arduino.h>
-#include <Adafruit_BME280.h>
+#include <Adafruit_SHT31.h>
 #include <Adafruit_Sensor.h>
+#include <Wire.h>
+#include <pcf8563.h>
 #include <Preferences.h>
 #include <time.h>
 #include <WiFi.h>
-#include <Wire.h>
 
 #include "_locale.h"
 #include "api_response.h"
@@ -34,8 +35,9 @@
 #endif
 
 // 太大，无法在栈上分配
-static owm_resp_onecall_t       owm_onecall;
-static owm_resp_air_pollution_t owm_air_pollution;
+static cma_weather_t weather_data;
+// 使用 lewisxhe/PCF8563_Library 驱动 BL8025C 实时时钟
+static PCF8563_Class rtc; // 外部 RTC
 
 Preferences prefs;
 
@@ -103,9 +105,9 @@ void beginDeepSleep(unsigned long startTime, tm *timeInfo)
 
   esp_sleep_enable_timer_wakeup(sleepDuration * 1000000ULL);
   Serial.print(TXT_AWAKE_FOR);
-  Serial.println(" "  + String((millis() - startTime) / 1000.0, 3) + "s");
+  Serial.println(" "  + String((millis() - startTime) / 1000.0, 3) + "秒");
   Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-  Serial.println(" " + String(sleepDuration) + "s");
+  Serial.println(" " + String(sleepDuration) + "秒");
   esp_deep_sleep_start();
 } // end beginDeepSleep
 
@@ -115,6 +117,10 @@ void setup()
 {
   unsigned long startTime = millis();
   Serial.begin(115200);
+
+  // 初始化 I2C 与外部实时时钟
+  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+  rtc.begin();
 
 #if DEBUG_LEVEL >= 1
   printHeapUsage();
@@ -128,7 +134,7 @@ void setup()
 #if BATTERY_MONITORING
   uint32_t batteryVoltage = readBatteryVoltage();
   Serial.print(TXT_BATTERY_VOLTAGE);
-  Serial.println(": " + String(batteryVoltage) + "mv");
+  Serial.println("：" + String(batteryVoltage) + "毫伏");
 
 
   // 当电池电量低时，应该刷新显示，但只在首次检测到低电压时刷新。
@@ -163,7 +169,7 @@ void setup()
                                     * 60ULL * 1000000ULL);
       Serial.println(TXT_VERY_LOW_BATTERY_VOLTAGE);
       Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-      Serial.println(" " + String(VERY_LOW_BATTERY_SLEEP_INTERVAL) + "min");
+      Serial.println(" " + String(VERY_LOW_BATTERY_SLEEP_INTERVAL) + "分钟");
     }
     else
     {  // 低电压
@@ -171,7 +177,7 @@ void setup()
                                     * 60ULL * 1000000ULL);
       Serial.println(TXT_LOW_BATTERY_VOLTAGE);
       Serial.print(TXT_ENTERING_DEEP_SLEEP_FOR);
-      Serial.println(" " + String(LOW_BATTERY_SLEEP_INTERVAL) + "min");
+      Serial.println(" " + String(LOW_BATTERY_SLEEP_INTERVAL) + "分钟");
     }
     esp_deep_sleep_start();
   }
@@ -224,14 +230,14 @@ void setup()
   if (!timeConfigured)
   {
     Serial.println(TXT_TIME_SYNCHRONIZATION_FAILED);
-    killWiFi();
-    initDisplay();
-    do
-    {
-      drawError(wi_time_4_196x196, TXT_TIME_SYNCHRONIZATION_FAILED);
-    } while (display.nextPage());
-    powerOffDisplay();
-    beginDeepSleep(startTime, &timeInfo);
+    // 使用外部 RTC 时间作为回退
+    auto now = rtc.getDateTime();
+    timeInfo.tm_year = now.year - 1900;
+    timeInfo.tm_mon  = now.month - 1;
+    timeInfo.tm_mday = now.day;
+    timeInfo.tm_hour = now.hour;
+    timeInfo.tm_min  = now.minute;
+    timeInfo.tm_sec  = now.second;
   }
 
   // API 请求
@@ -244,12 +250,12 @@ void setup()
   WiFiClientSecure client;
   client.setCACert(cert_Sectigo_RSA_Domain_Validation_Secure_Server_CA);
 #endif
-  int rxStatus = getOWMonecall(client, owm_onecall);
+  int rxStatus = getCMAweather(client, weather_data);
   if (rxStatus != HTTP_CODE_OK)
-  {
-    killWiFi();
-    statusStr = "One Call " + OWM_ONECALL_VERSION + " API";
-    tmpStr = String(rxStatus, DEC) + ": " + getHttpResponsePhrase(rxStatus);
+    {
+      killWiFi();
+      statusStr = "中国气象台 API";
+      tmpStr = String(rxStatus, DEC) + "：" + getHttpResponsePhrase(rxStatus);
     initDisplay();
     do
     {
@@ -258,42 +264,25 @@ void setup()
     powerOffDisplay();
     beginDeepSleep(startTime, &timeInfo);
   }
-  rxStatus = getOWMairpollution(client, owm_air_pollution);
-  if (rxStatus != HTTP_CODE_OK)
-  {
-    killWiFi();
-    statusStr = "Air Pollution API";
-    tmpStr = String(rxStatus, DEC) + ": " + getHttpResponsePhrase(rxStatus);
-    initDisplay();
-    do
-    {
-      drawError(wi_cloud_down_196x196, statusStr, tmpStr);
-    } while (display.nextPage());
-    powerOffDisplay();
-    beginDeepSleep(startTime, &timeInfo);
-  }
-  killWiFi();  // WiFi 不再需要
+    killWiFi();  // WiFi 不再需要
 
-  // 获取室内温湿度，启动 BME280...
-  pinMode(PIN_BME_PWR, OUTPUT);
-  digitalWrite(PIN_BME_PWR, HIGH);
+  // 读取室内温湿度，使用 SHT30 传感器
   float inTemp     = NAN;
   float inHumidity = NAN;
-  Serial.print(String(TXT_READING_FROM) + " BME280... ");
-  TwoWire I2C_bme = TwoWire(0);
-  Adafruit_BME280 bme;
+  Serial.print(String(TXT_READING_FROM) + " SHT30... ");
+  TwoWire I2C_sht = TwoWire(0);
+  Adafruit_SHT31 sht30 = Adafruit_SHT31();
 
-  I2C_bme.begin(PIN_BME_SDA, PIN_BME_SCL, 100000); // 100kHz
-  if(bme.begin(BME_ADDRESS, &I2C_bme))
+  I2C_sht.begin(PIN_I2C_SDA, PIN_I2C_SCL, 100000); // 100kHz
+  if (sht30.begin(SHT30_ADDRESS))
   {
-    inTemp     = bme.readTemperature(); // 摄氏度
-    inHumidity = bme.readHumidity();    // %
+    inTemp     = sht30.readTemperature(); // 摄氏度
+    inHumidity = sht30.readHumidity();    // %
 
-    // 检查 BME 读数是否有效
-    // 注意：在绘制到屏幕前会再次检查。如果读数不是数字（NAN），则发生错误，显示为 '-'
+    // 检查 SHT30 读数是否有效
     if (std::isnan(inTemp) || std::isnan(inHumidity))
     {
-      statusStr = "BME " + String(TXT_READ_FAILED);
+      statusStr = "SHT30 " + String(TXT_READ_FAILED);
       Serial.println(statusStr);
     }
     else
@@ -303,10 +292,9 @@ void setup()
   }
   else
   {
-    statusStr = "BME " + String(TXT_NOT_FOUND); // 检查接线
+    statusStr = "SHT30 " + String(TXT_NOT_FOUND); // 检查接线
     Serial.println(statusStr);
   }
-  digitalWrite(PIN_BME_PWR, LOW);
 
   String refreshTimeStr;
   getRefreshTimeStr(refreshTimeStr, timeConfigured, &timeInfo);
@@ -317,14 +305,8 @@ void setup()
   initDisplay();
   do
   {
-    drawCurrentConditions(owm_onecall.current, owm_onecall.daily[0],
-                          owm_air_pollution, inTemp, inHumidity);
-    drawOutlookGraph(owm_onecall.hourly, owm_onecall.daily, timeInfo);
-    drawForecast(owm_onecall.daily, timeInfo);
+    drawCurrentWeather(weather_data, inTemp, inHumidity);
     drawLocationDate(CITY_STRING, dateStr);
-#if DISPLAY_ALERTS
-    drawAlerts(owm_onecall.alerts, CITY_STRING, dateStr);
-#endif
     drawStatusBar(statusStr, refreshTimeStr, wifiRSSI, batteryVoltage);
   } while (display.nextPage());
   powerOffDisplay();

@@ -34,19 +34,17 @@
 // header files
 #include "_locale.h"
 #include "api_response.h"
-#include "aqi.h"
 #include "client_utils.h"
 #include "config.h"
 #include "display_utils.h"
-#include "renderer.h"
 #ifndef USE_HTTP
   #include <WiFiClientSecure.h>
 #endif
 
 #ifdef USE_HTTP
-  static const uint16_t OWM_PORT = 80;
+  static const uint16_t CMA_PORT = 80;
 #else
-  static const uint16_t OWM_PORT = 443;
+  static const uint16_t CMA_PORT = 443;
 #endif
 
 /* Power-on and connect WiFi.
@@ -77,7 +75,7 @@ wl_status_t startWiFi(int &wifiRSSI)
   {
     wifiRSSI = WiFi.RSSI(); // get WiFi signal strength now, because the WiFi
                             // will be turned off to save power!
-    Serial.println("IP: " + WiFi.localIP().toString());
+    Serial.println("IP地址: " + WiFi.localIP().toString());
   }
   else
   {
@@ -137,37 +135,32 @@ bool waitForSNTPSync(tm *timeInfo)
   return printLocalTime(timeInfo);
 } // waitForSNTPSync
 
-/* Perform an HTTP GET request to OpenWeatherMap's "One Call" API
- * If data is received, it will be parsed and stored in the global variable
- * owm_onecall.
+/* 调用中国气象台天气预报 API。
+ * 若接收到数据，将解析并存入 r。
  *
- * Returns the HTTP Status Code.
+ * 返回 HTTP 状态码。
  */
 #ifdef USE_HTTP
-  int getOWMonecall(WiFiClient &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClient &client, cma_weather_t &r)
 #else
-  int getOWMonecall(WiFiClientSecure &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClientSecure &client, cma_weather_t &r)
 #endif
 {
   int attempts = 0;
   bool rxSuccess = false;
   DeserializationError jsonErr = {};
-  String uri = "/data/" + OWM_ONECALL_VERSION
-               + "/onecall?lat=" + LAT + "&lon=" + LON + "&lang=" + OWM_LANG
-               + "&units=standard&exclude=minutely";
-#if !DISPLAY_ALERTS
-  // exclude alerts
-  uri += ",alerts";
-#endif
+  // 构造请求 URI
+  String uri = String("/api/tianqi/tqyb.php?pid=") + CMA_PID + "&key=" + CMA_KEY
+               + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
+               + "&place=" + CMA_PLACE;
 
-  // This string is printed to terminal to help with debugging. The API key is
-  // censored to reduce the risk of users exposing their key.
-  String sanitizedUri = OWM_ENDPOINT + uri + "&appid={API key}";
-
-  uri += "&appid=" + OWM_APIKEY;
+  String sanitizedUri = String(CMA_ENDPOINT) +
+                        "/api/tianqi/tqyb.php?pid=" + CMA_PID + "&key={KEY}"
+                        + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
+                        + "&place=" + CMA_PLACE;
 
   Serial.print(TXT_ATTEMPTING_HTTP_REQ);
-  Serial.println(": " + sanitizedUri);
+  Serial.println("：" + sanitizedUri);
   int httpResponse = 0;
   while (!rxSuccess && attempts < 3)
   {
@@ -181,11 +174,11 @@ bool waitForSNTPSync(tm *timeInfo)
     HTTPClient http;
     http.setConnectTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
     http.setTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
-    http.begin(client, OWM_ENDPOINT, OWM_PORT, uri);
+    http.begin(client, CMA_ENDPOINT, CMA_PORT, uri);
     httpResponse = http.GET();
     if (httpResponse == HTTP_CODE_OK)
     {
-      jsonErr = deserializeOneCall(http.getStream(), r);
+      jsonErr = deserializeCMAWeather(http.getStream(), r);
       if (jsonErr)
       {
         // -256 offset distinguishes these errors from httpClient errors
@@ -201,91 +194,18 @@ bool waitForSNTPSync(tm *timeInfo)
   }
 
   return httpResponse;
-} // getOWMonecall
-
-/* Perform an HTTP GET request to OpenWeatherMap's "Air Pollution" API
- * If data is received, it will be parsed and stored in the global variable
- * owm_air_pollution.
- *
- * Returns the HTTP Status Code.
- */
-#ifdef USE_HTTP
-  int getOWMairpollution(WiFiClient &client, owm_resp_air_pollution_t &r)
-#else
-  int getOWMairpollution(WiFiClientSecure &client, owm_resp_air_pollution_t &r)
-#endif
-{
-  int attempts = 0;
-  bool rxSuccess = false;
-  DeserializationError jsonErr = {};
-
-  // set start and end to appropriate values so that the last 24 hours of air
-  // pollution history is returned. Unix, UTC.
-  time_t now;
-  int64_t end = time(&now);
-  // minus 1 is important here, otherwise we could get an extra hour of history
-  int64_t start = end - ((3600 * OWM_NUM_AIR_POLLUTION) - 1);
-  char endStr[22];
-  char startStr[22];
-  sprintf(endStr, "%lld", end);
-  sprintf(startStr, "%lld", start);
-  String uri = "/data/2.5/air_pollution/history?lat=" + LAT + "&lon=" + LON
-               + "&start=" + startStr + "&end=" + endStr
-               + "&appid=" + OWM_APIKEY;
-  // This string is printed to terminal to help with debugging. The API key is
-  // censored to reduce the risk of users exposing their key.
-  String sanitizedUri = OWM_ENDPOINT +
-               "/data/2.5/air_pollution/history?lat=" + LAT + "&lon=" + LON
-               + "&start=" + startStr + "&end=" + endStr
-               + "&appid={API key}";
-
-  Serial.print(TXT_ATTEMPTING_HTTP_REQ);
-  Serial.println(": " + sanitizedUri);
-  int httpResponse = 0;
-  while (!rxSuccess && attempts < 3)
-  {
-    wl_status_t connection_status = WiFi.status();
-    if (connection_status != WL_CONNECTED)
-    {
-      // -512 offset distinguishes these errors from httpClient errors
-      return -512 - static_cast<int>(connection_status);
-    }
-
-    HTTPClient http;
-    http.setConnectTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
-    http.setTimeout(HTTP_CLIENT_TCP_TIMEOUT); // default 5000ms
-    http.begin(client, OWM_ENDPOINT, OWM_PORT, uri);
-    httpResponse = http.GET();
-    if (httpResponse == HTTP_CODE_OK)
-    {
-      jsonErr = deserializeAirQuality(http.getStream(), r);
-      if (jsonErr)
-      {
-        // -256 offset to distinguishes these errors from httpClient errors
-        httpResponse = -256 - static_cast<int>(jsonErr.code());
-      }
-      rxSuccess = !jsonErr;
-    }
-    client.stop();
-    http.end();
-    Serial.println("  " + String(httpResponse, DEC) + " "
-                   + getHttpResponsePhrase(httpResponse));
-    ++attempts;
-  }
-
-  return httpResponse;
-} // getOWMairpollution
+} // getCMAweather
 
 /* Prints debug information about heap usage.
  */
 void printHeapUsage() {
-  Serial.println("[debug] Heap Size       : "
+  Serial.println("[调试] 堆大小       : "
                  + String(ESP.getHeapSize()) + " B");
-  Serial.println("[debug] Available Heap  : "
+  Serial.println("[调试] 可用堆       : "
                  + String(ESP.getFreeHeap()) + " B");
-  Serial.println("[debug] Min Free Heap   : "
+  Serial.println("[调试] 最小可用堆   : "
                  + String(ESP.getMinFreeHeap()) + " B");
-  Serial.println("[debug] Max Allocatable : "
+  Serial.println("[调试] 最大可分配   : "
                  + String(ESP.getMaxAllocHeap()) + " B");
   return;
 }
