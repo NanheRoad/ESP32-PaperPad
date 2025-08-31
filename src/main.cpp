@@ -19,7 +19,7 @@
 #include <Preferences.h>
 #include <time.h>
 #include <WiFi.h>
-
+#include <HTTPClient.h>
 #include "_locale.h"
 #include "api_response.h"
 #include "client_utils.h"

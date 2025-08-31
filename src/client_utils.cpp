@@ -47,11 +47,10 @@
   static const uint16_t CMA_PORT = 443;
 #endif
 
-/* Power-on and connect WiFi.
- * Takes int parameter to store WiFi RSSI, or “Received Signal Strength
- * Indicator"
+/* 启动并连接WiFi
+ * 接收一个int参数用于存储WiFi信号强度（RSSI）
  *
- * Returns WiFi status.
+ * 返回WiFi连接状态
  */
 wl_status_t startWiFi(int &wifiRSSI)
 {
@@ -59,7 +58,7 @@ wl_status_t startWiFi(int &wifiRSSI)
   Serial.printf("%s '%s'", TXT_CONNECTING_TO, WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  // timeout if WiFi does not connect in WIFI_TIMEOUT ms from now
+  // 如果WiFi在WIFI_TIMEOUT毫秒内未连接则超时
   unsigned long timeout = millis() + WIFI_TIMEOUT;
   wl_status_t connection_status = WiFi.status();
 
@@ -73,8 +72,7 @@ wl_status_t startWiFi(int &wifiRSSI)
 
   if (connection_status == WL_CONNECTED)
   {
-    wifiRSSI = WiFi.RSSI(); // get WiFi signal strength now, because the WiFi
-                            // will be turned off to save power!
+    wifiRSSI = WiFi.RSSI(); // 现在获取WiFi信号强度，因为WiFi将被关闭以节省电量！
     Serial.println("IP地址: " + WiFi.localIP().toString());
   }
   else
@@ -84,7 +82,7 @@ wl_status_t startWiFi(int &wifiRSSI)
   return connection_status;
 } // startWiFi
 
-/* Disconnect and power-off WiFi.
+/* 断开并关闭WiFi连接以节省电量
  */
 void killWiFi()
 {
@@ -92,9 +90,9 @@ void killWiFi()
   WiFi.mode(WIFI_OFF);
 } // killWiFi
 
-/* Prints the local time to serial monitor.
+/* 在串口监视器上打印本地时间
  *
- * Returns true if getting local time was a success, otherwise false.
+ * 如果成功获取本地时间则返回true，否则返回false
  */
 bool printLocalTime(tm *timeInfo)
 {
@@ -108,16 +106,15 @@ bool printLocalTime(tm *timeInfo)
   return true;
 } // printLocalTime
 
-/* Waits for NTP server time sync, adjusted for the time zone specified in
- * config.cpp.
+/* 等待NTP服务器时间同步，并根据config.cpp中指定的时区进行调整
  *
- * Returns true if time was set successfully, otherwise false.
+ * 如果时间设置成功则返回true，否则返回false
  *
- * Note: Must be connected to WiFi to get time from NTP server.
+ * 注意：必须连接WiFi才能从NTP服务器获取时间
  */
 bool waitForSNTPSync(tm *timeInfo)
 {
-  // Wait for SNTP synchronization to complete
+  // 等待SNTP同步完成
   unsigned long timeout = millis() + NTP_TIMEOUT;
   if ((sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET)
       && (millis() < timeout))
@@ -135,10 +132,18 @@ bool waitForSNTPSync(tm *timeInfo)
   return printLocalTime(timeInfo);
 } // waitForSNTPSync
 
-/* 调用中国气象台天气预报 API。
- * 若接收到数据，将解析并存入 r。
+/* 调用中国气象台天气预报API
+ * 如果接收到数据，将解析并存入r参数中
  *
- * 返回 HTTP 状态码。
+ * 返回HTTP状态码
+ * 
+ * 成功的状态码：
+ *   200: HTTP_CODE_OK - 请求成功
+ * 
+ * 错误状态码：
+ *   -512 ~ -520: WiFi连接错误（基于WiFi状态码偏移-512）
+ *   -256 ~ -260: JSON解析错误（基于DeserializationError偏移-256）
+ *   其他HTTP状态码: 标准HTTP错误码
  */
 #ifdef USE_HTTP
   int getCMAweather(WiFiClient &client, cma_weather_t &r)
@@ -149,10 +154,10 @@ bool waitForSNTPSync(tm *timeInfo)
   int attempts = 0;
   bool rxSuccess = false;
   DeserializationError jsonErr = {};
-  // 构造请求 URI
+  // 构造请求URI
   String uri = String("/api/tianqi/tqyb.php?pid=") + CMA_PID + "&key=" + CMA_KEY
-               + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
-               + "&place=" + CMA_PLACE;
+                + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
+                + "&place=" + CMA_PLACE;
 
   String sanitizedUri = String(CMA_ENDPOINT) +
                         "/api/tianqi/tqyb.php?pid=" + CMA_PID + "&key={KEY}"
@@ -189,25 +194,9 @@ bool waitForSNTPSync(tm *timeInfo)
     client.stop();
     http.end();
     Serial.println("  " + String(httpResponse, DEC) + " "
-                   + getHttpResponsePhrase(httpResponse));
+                    + getHttpResponsePhrase(httpResponse));
     ++attempts;
   }
 
   return httpResponse;
 } // getCMAweather
-
-
-/* Prints debug information about heap usage.
- */
-void printHeapUsage() {
-  Serial.println("[调试] 堆大小       : "
-                 + String(ESP.getHeapSize()) + " B");
-  Serial.println("[调试] 可用堆       : "
-                 + String(ESP.getFreeHeap()) + " B");
-  Serial.println("[调试] 最小可用堆   : "
-                 + String(ESP.getMinFreeHeap()) + " B");
-  Serial.println("[调试] 最大可分配   : "
-                 + String(ESP.getMaxAllocHeap()) + " B");
-  return;
-}
-
