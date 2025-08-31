@@ -1,5 +1,4 @@
 /* 中国气象台 API 响应结构声明 */
-
 #ifndef __API_RESPONSE_H__
 #define __API_RESPONSE_H__
 
@@ -11,7 +10,6 @@
 typedef struct {
   float  precipitation;      // 降水量 mm
   float  temperature;        // 温度 °C
-  float  pressure;           // 气压 hPa
   int    humidity;           // 湿度 %
   String windDirection;      // 风向文字
   int    windDirectionDegree;// 风向角度

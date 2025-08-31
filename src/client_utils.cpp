@@ -141,9 +141,9 @@ bool waitForSNTPSync(tm *timeInfo)
  * 返回 HTTP 状态码。
  */
 #ifdef USE_HTTP
-  int getCMAweather(WiFiClient &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClient &client, cma_weather_t &r)
 #else
-  int getCMAweather(WiFiClientSecure &client, owm_resp_onecall_t &r)
+  int getCMAweather(WiFiClientSecure &client, cma_weather_t &r)
 #endif
 {
   int attempts = 0;

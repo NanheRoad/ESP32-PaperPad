@@ -73,7 +73,7 @@ void getRefreshTimeStr(String &s, bool timeSuccess, tm *timeInfo)
 /* 根据 RSSI 返回 WiFi 描述 */
 const char *getWiFidesc(int rssi)
 {
-  if (rssi == 0) { return TXT_NO_WIFI; }
+  if (rssi == 0) { return TXT_WIFI_NO_CONNECTION; }
   if (rssi >= -50) { return TXT_WIFI_EXCELLENT; }
   if (rssi >= -60) { return TXT_WIFI_GOOD; }
   if (rssi >= -67) { return TXT_WIFI_FAIR; }
@@ -83,11 +83,8 @@ const char *getWiFidesc(int rssi)
 /* 根据 RSSI 获取 16x16 WiFi 图标 */
 const uint8_t *getWiFiBitmap16(int rssi)
 {
-  if (rssi >= -50) { return wifi_3_16x16; }
-  if (rssi >= -60) { return wifi_2_16x16; }
-  if (rssi >= -67) { return wifi_1_16x16; }
-  if (rssi < 0)    { return wifi_0_16x16; }
-  return wifi_3_16x16;
+  // 当前资源仅提供一个 16x16 WiFi 图标，占位返回
+  return wifi_x_16x16;
 }
 
 /* HTTP 状态码对应描述 */
