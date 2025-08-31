@@ -17,6 +17,7 @@ static int cnWindToDeg(const String &s)
   return 0;
 }
 
+/* 反序列化中国气象台天气数据 */
 DeserializationError deserializeCMAWeather(WiFiClient &json,
                                            cma_weather_t &r)
 {
@@ -45,4 +46,3 @@ DeserializationError deserializeCMAWeather(WiFiClient &json,
   r.weather2 = root["weather2"] | String();
   return error;
 } // end deserializeCMAWeather
-

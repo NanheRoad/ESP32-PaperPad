@@ -1,4 +1,4 @@
-/* Unit conversion functions for esp32-weather-epd.
+/* esp32-weather-epd的单位转换函数
  * Copyright (C) 2023  Luke Marzen
  *
  * This program is free software: you can redistribute it and/or modify

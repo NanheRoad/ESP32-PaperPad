@@ -1,4 +1,4 @@
-/* Client side utilities for esp32-weather-epd.
+/* esp32-weather-epd的客户端工具
  * Copyright (C) 2022-2024  Luke Marzen
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// built-in C++ libraries
+// 内置C++库
 #include <cstring>
 #include <vector>
 
-// arduino/esp32 libraries
+// arduino/esp32库
 #include <Arduino.h>
 #include <esp_sntp.h>
 #include <HTTPClient.h>
@@ -27,11 +27,11 @@
 #include <time.h>
 #include <WiFi.h>
 
-// additional libraries
+// 额外库
 #include <Adafruit_BusIO_Register.h>
 #include <ArduinoJson.h>
 
-// header files
+// 头文件
 #include "_locale.h"
 #include "api_response.h"
 #include "client_utils.h"

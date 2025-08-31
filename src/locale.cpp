@@ -1,4 +1,4 @@
-/* Locale source for esp32-weather-epd.
+/* esp32-weather-epd的本地化源文件
  * Copyright (C) 2022-2024  Luke Marzen
  *
  * This program is free software: you can redistribute it and/or modify

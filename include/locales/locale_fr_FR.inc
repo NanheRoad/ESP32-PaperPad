@@ -242,7 +242,7 @@ const std::vector<String> TERM_STRONG_WIND =
     {"wind"};
 
 // AIR QUALITY INDEX
-extern "C" {
+// (AQI calculation support removed; no AQI-specific data here)
 // Seemingly every country uses a different scale for Air Quality Index (AQI).
 // I have written a library to calculate many of the most popular AQI scales.
 // Feel free to request the addition of a new AQI scale by opening an Issue.
@@ -335,7 +335,7 @@ const char *UNITED_STATES_AQI_TXT[6] =
   "Tr\350s malsain",
   "Dangereux",
 };
-} // end extern "C"
+// (end AQI section removed)
 
 // COMPASS POINT
 const char *COMPASS_POINT_NOTATION[32] = {

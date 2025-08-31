@@ -1,4 +1,4 @@
-/* Custom strftime ISO C library routine for esp32-weather-epd.
+/* 用于esp32-weather-epd的自定义strftime ISO C库例程
  * Copyright (C) 2023  Luke Marzen
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* An implementation of ISO C library routine, strftime.
+/* ISO C库例程strftime的实现
  *
- * This implementation uses locale info from _locale.h rather than depending on
- * system locale files.
+ * 此实现使用来自_locale.h的本地化信息，而不依赖于系统本地化文件
  *
- * This is modified version of a public domain strftime implementation that
- * was retrieved from https://github.com/arnoldrobbins/strftime/.
+ * 这是基于从https://github.com/arnoldrobbins/strftime/获取的公共领域strftime实现的修改版本
  *
- * The C99 standard now specifies just about all of the formats that were
- * additional in the earlier versions of this file.
+ * C99标准现在指定了早期版本中额外添加的几乎所有格式
  *
- * For extensions from SunOS (Olson's timezone package), add TZ_EXT.
- * For VMS dates, add VMS_EXT.
- * For extensions from GNU, add GNU_EXT.
+ * 对于SunOS的扩展（Olson的时区包），添加TZ_EXT
+ * 对于VMS日期，添加VMS_EXT
+ * 对于GNU的扩展，添加GNU_EXT
  *
- * The code for %X follows the C99 specification for the "C" locale.
- * The code for %c, and %x follows the C11 specification for the "C" locale.
+ * %X的代码遵循"C"区域设置的C99规范
+ * %c和%x的代码遵循"C"区域设置的C11规范
  *
- * Note: No implementations for %z and %Z.
+ * 注意：%z和%Z没有实现
  */
 
 #include <cctype>
@@ -45,21 +42,21 @@
 #include "_locale.h"
 #include "_strftime.h"
 
-#define TZ_EXT     // Olson's timezone package
-#define VMS_EXT    // includes %v for VMS date format
-#define POSIX_2008 // flag and fw for C, F, G, Y formats
-#define GNU_EXT    // includes %P
+#define TZ_EXT     // Olson的时区包
+#define VMS_EXT    // 包含%v的VMS日期格式
+#define POSIX_2008 // C, F, G, Y格式的标志和fw
+#define GNU_EXT    // 包含%P
 
 #define range(low, item, hi) std::max(low, std::min(item, hi))
 
-/* Returns an int indication whether or not it is a leap year.
+/* 返回一个整数，表示是否是闰年。
  */
 static int isleap(long year)
 {
   return ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0);
 } // end isleap
 
-/* Compute week number.
+/* 计算周数。
  */
 static int weeknumber(const struct tm *timeptr, int firstweekday)
 {
@@ -79,7 +76,7 @@ static int weeknumber(const struct tm *timeptr, int firstweekday)
   return ret;
 } // end weeknumber
 
-/* Compute week number according to ISO 8601.
+/* 根据ISO 8601标准计算周数。
  */
 static int iso8601wknum(const struct tm *timeptr)
 {
@@ -180,7 +177,7 @@ static int iso8601wknum(const struct tm *timeptr)
 } // end iso8601wknum
 
 #ifdef POSIX_2008
-/* Format a year per ISO 8601:2000 as in 1003.1
+/* 按照ISO 8601:2000标准格式化年份，如同1003.1中定义的那样
  */
 static void iso_8601_2000_year(char *buf, int year, size_t fw)
 {
@@ -210,9 +207,8 @@ static void iso_8601_2000_year(char *buf, int year, size_t fw)
 }
 #endif // POSIX_2008
 
-/* The strftime() function formats the broken-down time tm according to the
- * format specification format and places the result in the character array s of
- * size max.
+/* strftime() 函数根据格式说明format对分解时间tm进行格式化，
+ * 并将结果放入大小为max的字符数组s中。
  */
 size_t _strftime(char *s, size_t maxsize, const char *format,
                  const struct tm *timeptr)
