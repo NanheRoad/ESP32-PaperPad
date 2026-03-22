@@ -29,8 +29,8 @@
 //   DISP_7C_F  - 7.3" 7 色 ACeP 800x480px
 //   DISP_BW_V1 - 7.5" 黑白 640x384px
 // 取消注释与你的实际面板相对应的宏。
-#define DISP_BW_V2
-// #define DISP_3C_B
+// #define DISP_BW_V2
+#define DISP_3C_B
 // #define DISP_7C_F
 // #define DISP_BW_V1
 
@@ -38,8 +38,8 @@
 // 官方仅支持 DESPI-C02 驱动板。
 // Waveshare rev2.2 / rev2.3 已弃用，rev2.2 已停产，rev2.3 对比度偏低。
 // 取消注释与你的驱动板对应的宏。
-#define DRIVER_DESPI_C02
-// #define DRIVER_WAVESHARE
+// #define DRIVER_DESPI_C02
+#define DRIVER_WAVESHARE
 
 // 三色墨水屏强调色
 // 在选择三色及以上显示屏时定义第三种颜色。
@@ -73,16 +73,16 @@
 //   公制：摄氏度
 //   英制：华氏度
 // #define UNITS_TEMP_KELVIN
-// #define UNITS_TEMP_CELSIUS
-#define UNITS_TEMP_FAHRENHEIT
+#define UNITS_TEMP_CELSIUS
+// #define UNITS_TEMP_FAHRENHEIT
 
 // 风速单位
 //   公制：公里/小时
 //   英制：英里/小时
 // #define UNITS_SPEED_METERSPERSECOND
 // #define UNITS_SPEED_FEETPERSECOND
-// #define UNITS_SPEED_KILOMETERSPERHOUR
-#define UNITS_SPEED_MILESPERHOUR
+#define UNITS_SPEED_KILOMETERSPERHOUR
+// #define UNITS_SPEED_MILESPERHOUR
 // #define UNITS_SPEED_KNOTS
 // #define UNITS_SPEED_BEAUFORT
 
@@ -100,8 +100,8 @@
 // 可选择降水概率 PoP 或每小时降水量。
 //   公制：毫米
 //   英制：英寸
-#define UNITS_HOURLY_PRECIP_POP
-// #define UNITS_HOURLY_PRECIP_MILLIMETERS
+// #define UNITS_HOURLY_PRECIP_POP
+#define UNITS_HOURLY_PRECIP_MILLIMETERS
 // #define UNITS_HOURLY_PRECIP_CENTIMETERS
 // #define UNITS_HOURLY_PRECIP_INCHES
 
@@ -226,6 +226,11 @@
 //   level 2: 打印 API 返回数据
 #define DEBUG_LEVEL 0
 
+// 显示自检模式
+//   1: 上电仅执行墨水屏测试页，不联网、不深度睡眠。
+//   0: 正常天气流程。
+#define DISPLAY_SELF_TEST 0
+
 // 以下常量在 "config.cpp" 中定义
 extern const uint8_t PIN_BAT_ADC;
 extern const uint8_t PIN_EPD_BUSY;
@@ -233,9 +238,9 @@ extern const uint8_t PIN_EPD_CS;
 extern const uint8_t PIN_EPD_RST;
 extern const uint8_t PIN_EPD_DC;
 extern const uint8_t PIN_EPD_SCK;
-extern const uint8_t PIN_EPD_MISO;
+extern const int8_t PIN_EPD_MISO;
 extern const uint8_t PIN_EPD_MOSI;
-extern const uint8_t PIN_EPD_PWR;
+extern const int8_t PIN_EPD_PWR;
 extern const uint8_t PIN_I2C_SDA;
 extern const uint8_t PIN_I2C_SCL;
 extern const uint8_t SHT30_ADDRESS;

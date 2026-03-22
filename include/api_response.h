@@ -24,5 +24,7 @@ typedef struct {
 
 DeserializationError deserializeCMAWeather(WiFiClient &json,
                                            cma_weather_t &r);
+DeserializationError deserializeCMAWeather(const String &json,
+                                           cma_weather_t &r);
 
 #endif

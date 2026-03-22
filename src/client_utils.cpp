@@ -16,6 +16,7 @@
  */
 
 // 内置C++库
+#include <cctype>
 #include <cstring>
 #include <vector>
 
@@ -46,6 +47,28 @@
 #else
   static const uint16_t CMA_PORT = 443;
 #endif
+
+static String urlEncode(const String &in)
+{
+  String out;
+  out.reserve(in.length() * 3);
+  const char *hex = "0123456789ABCDEF";
+  for (size_t i = 0; i < in.length(); ++i)
+  {
+    const uint8_t c = static_cast<uint8_t>(in[i]);
+    if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+    {
+      out += static_cast<char>(c);
+    }
+    else
+    {
+      out += '%';
+      out += hex[(c >> 4) & 0x0F];
+      out += hex[c & 0x0F];
+    }
+  }
+  return out;
+}
 
 /* 启动并连接WiFi
  * 接收一个int参数用于存储WiFi信号强度（RSSI）
@@ -154,13 +177,16 @@ bool waitForSNTPSync(tm *timeInfo)
   int attempts = 0;
   bool rxSuccess = false;
   DeserializationError jsonErr = {};
+  const String encProvince = urlEncode(CMA_PROVINCE);
+  const String encCity = urlEncode(CMA_CITY);
+  const String encPlace = urlEncode(CMA_PLACE);
   // 构造请求URI
-  String uri = String("/api/tianqi/tqyb.php?pid=") + CMA_PID + "&key=" + CMA_KEY
-                + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
-                + "&place=" + CMA_PLACE;
+  String uri = String("/api/tianqi/tqyb.php?id=") + CMA_PID + "&key=" + CMA_KEY
+                + "&sheng=" + encProvince + "&shi=" + encCity
+                + "&place=" + encPlace;
 
   String sanitizedUri = String(CMA_ENDPOINT) +
-                        "/api/tianqi/tqyb.php?pid=" + CMA_PID + "&key={KEY}"
+                        "/api/tianqi/tqyb.php?id=" + CMA_PID + "&key={KEY}"
                         + "&sheng=" + CMA_PROVINCE + "&shi=" + CMA_CITY
                         + "&place=" + CMA_PLACE;
 
@@ -183,13 +209,29 @@ bool waitForSNTPSync(tm *timeInfo)
     httpResponse = http.GET();
     if (httpResponse == HTTP_CODE_OK)
     {
-      jsonErr = deserializeCMAWeather(http.getStream(), r);
+      String payload = http.getString();
+      jsonErr = deserializeCMAWeather(payload, r);
       if (jsonErr)
       {
         // -256 offset distinguishes these errors from httpClient errors
         httpResponse = -256 - static_cast<int>(jsonErr.code());
+        String snippet = payload.substring(0, 220);
+        snippet.replace("\n", " ");
+        snippet.replace("\r", " ");
+        Serial.println("  [API响应片段] " + snippet);
+        r.message = "响应不是有效JSON";
+      }
+      else if (r.code != HTTP_CODE_OK)
+      {
+        // API may return HTTP 200 with business error in body["code"].
+        httpResponse = r.code > 0 ? r.code : HTTP_CODE_BAD_REQUEST;
+        if (!r.message.isEmpty())
+        {
+          Serial.println("  [API消息] " + r.message);
+        }
       }
       rxSuccess = !jsonErr;
+      rxSuccess = rxSuccess && (r.code == HTTP_CODE_OK);
     }
     client.stop();
     http.end();

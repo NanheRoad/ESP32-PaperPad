@@ -27,7 +27,7 @@
 #include "display_utils.h"
 #include "icons/icons_196x196.h"
 #include "renderer.h"
-#if defined(USE_HTTPS_WITH_CERT_VERIF) || defined(USE_HTTPS_WITH_CERT_VERIF)
+#if defined(USE_HTTPS_NO_CERT_VERIF) || defined(USE_HTTPS_WITH_CERT_VERIF)
   #include <WiFiClientSecure.h>
 #endif
 #ifdef USE_HTTPS_WITH_CERT_VERIF
@@ -40,6 +40,41 @@ static cma_weather_t weather_data;
 static PCF8563_Class rtc; // 外部 RTC
 
 Preferences prefs;
+
+static bool hasDefaultApiConfig()
+{
+  return CMA_PID == "your_id"
+      || CMA_KEY == "your_key"
+      || CMA_PROVINCE == "省份"
+      || CMA_CITY == "城市"
+      || CMA_PLACE == "区县";
+}
+
+#if DISPLAY_SELF_TEST
+static void runDisplaySelfTest()
+{
+  Serial.println("进入显示自检模式：仅测试墨水屏，不联网。");
+  pinMode(PIN_EPD_BUSY, INPUT);
+  Serial.println("BUSY(init前) = " + String(digitalRead(PIN_EPD_BUSY)));
+  initDisplay();
+  Serial.println("BUSY(init后) = " + String(digitalRead(PIN_EPD_BUSY)));
+  do
+  {
+    display.fillScreen(GxEPD_WHITE);
+    display.fillRect(0, 0, DISP_WIDTH / 3, DISP_HEIGHT, GxEPD_BLACK);
+#if defined(DISP_3C_B) || defined(DISP_7C_F)
+    display.fillRect(DISP_WIDTH / 3, 0, DISP_WIDTH / 3, DISP_HEIGHT, ACCENT_COLOR);
+#endif
+    drawString(DISP_WIDTH - 16, 48, "EPD SELF TEST", RIGHT, GxEPD_BLACK);
+    drawString(DISP_WIDTH - 16, 82, "BUSY/RST/DC/CS/SPI", RIGHT, GxEPD_BLACK);
+    drawString(DISP_WIDTH - 16, 116, "If no update, check BUSY(17)", RIGHT, GxEPD_BLACK);
+  } while (display.nextPage());
+  Serial.println("BUSY(刷新后) = " + String(digitalRead(PIN_EPD_BUSY)));
+  powerOffDisplay();
+  Serial.println("BUSY(关机后) = " + String(digitalRead(PIN_EPD_BUSY)));
+  Serial.println("显示自检完成，停止后续流程。");
+}
+#endif
 
 
 /* 让 esp32 进入超低功耗深度睡眠（<11μA）。
@@ -128,6 +163,11 @@ void setup()
 
   disableBuiltinLED();
 
+#if DISPLAY_SELF_TEST
+  runDisplaySelfTest();
+  return;
+#endif
+
   // 打开命名空间以读写非易失性存储
   prefs.begin(NVS_NAMESPACE, false);
 
@@ -136,13 +176,21 @@ void setup()
   Serial.print(TXT_BATTERY_VOLTAGE);
   Serial.println("：" + String(batteryVoltage) + "毫伏");
 
+  // USB-only 场景下（未接电池）ADC_BAT 可能悬空，读数会异常偏低。
+  // 这类无效值不应触发低电保护，否则设备会开机即休眠。
+  const bool batteryReadingInvalid = (batteryVoltage < 1000);
+  if (batteryReadingInvalid)
+  {
+    Serial.println("电池电压读数无效，跳过低电保护（可能为USB供电且未接电池）");
+    batteryVoltage = UINT32_MAX;
+  }
 
   // 当电池电量低时，应该刷新显示，但只在首次检测到低电压时刷新。
   // 下次刷新是在电压恢复正常时。为此我们会用非易失性存储做标记。
   bool lowBat = prefs.getBool("lowBat", false);
 
   // 电池电量低，立即进入深度睡眠
-  if (batteryVoltage <= LOW_BATTERY_VOLTAGE)
+  if (!batteryReadingInvalid && batteryVoltage <= LOW_BATTERY_VOLTAGE)
   {
     if (lowBat == false)
     {  // 首次检测到电池电量低
@@ -250,12 +298,34 @@ void setup()
   WiFiClientSecure client;
   client.setCACert(cert_Sectigo_RSA_Domain_Validation_Secure_Server_CA);
 #endif
+  if (hasDefaultApiConfig())
+  {
+    killWiFi();
+    statusStr = "中国气象台 API";
+    tmpStr = "请先配置 id/key/省市区";
+    Serial.println("配置错误：请在 config.cpp 中填入真实 CMA id/key/省市区。");
+    initDisplay();
+    do
+    {
+      drawError(wi_cloud_down_196x196, statusStr, tmpStr);
+    } while (display.nextPage());
+    powerOffDisplay();
+    beginDeepSleep(startTime, &timeInfo);
+  }
+
   int rxStatus = getCMAweather(client, weather_data);
   if (rxStatus != HTTP_CODE_OK)
     {
       killWiFi();
       statusStr = "中国气象台 API";
-      tmpStr = String(rxStatus, DEC) + "：" + getHttpResponsePhrase(rxStatus);
+      if (!weather_data.message.isEmpty())
+      {
+        tmpStr = String(rxStatus, DEC) + "：" + weather_data.message;
+      }
+      else
+      {
+        tmpStr = String(rxStatus, DEC) + "：" + getHttpResponsePhrase(rxStatus);
+      }
     initDisplay();
     do
     {
@@ -270,10 +340,9 @@ void setup()
   float inTemp     = NAN;
   float inHumidity = NAN;
   Serial.print(String(TXT_READING_FROM) + " SHT30... ");
-  TwoWire I2C_sht = TwoWire(0);
   Adafruit_SHT31 sht30 = Adafruit_SHT31();
 
-  I2C_sht.begin(PIN_I2C_SDA, PIN_I2C_SCL, 100000); // 100kHz
+  // Adafruit_SHT31 库当前版本仅支持全局 Wire 总线
   if (sht30.begin(SHT30_ADDRESS))
   {
     inTemp     = sht30.readTemperature(); // 摄氏度
@@ -320,4 +389,3 @@ void setup()
 void loop()
 {
 } // end loop
-

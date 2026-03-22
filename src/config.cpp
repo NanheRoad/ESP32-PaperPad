@@ -20,26 +20,26 @@
 // 注意：LED_BUILTIN 引脚将被禁用以降低功耗。请参考你的开发板引脚图，确保避免使用具有该共享功能的引脚。
 //
 // 用于测量电池电压的 ADC 引脚
-// ESP32 DevKit 模块未定义 A0/A2 等别名，这里使用 GPIO35 作为模拟输入
-const uint8_t PIN_BAT_ADC  = 35;
+// 与原理图网络 ADC_BAT 对应（GPIO36 / SENSOR_VP）
+const uint8_t PIN_BAT_ADC  = 36;
 // E-Paper 驱动板引脚
-const uint8_t PIN_EPD_BUSY = 14;  // EPD_BUSY
-const uint8_t PIN_EPD_CS   = 13;  // EPD_CS
-const uint8_t PIN_EPD_RST  = 21;  // EPD_RST
-const uint8_t PIN_EPD_DC   = 22;  // EPD_DC
+const uint8_t PIN_EPD_BUSY = 17;  // EPD_BUSY
+const uint8_t PIN_EPD_CS   = 5;   // EPD_CS
+const uint8_t PIN_EPD_RST  = 16;  // EPD_RST
+const uint8_t PIN_EPD_DC   = 19;  // EPD_DC
 const uint8_t PIN_EPD_SCK  = 18;  // EPD_CLK
-const uint8_t PIN_EPD_MISO = 19;  // SPI MISO (未使用)
+const int8_t  PIN_EPD_MISO = -1;  // SPI MISO (未使用)
 const uint8_t PIN_EPD_MOSI = 23;  // EPD_DIN
-const uint8_t PIN_EPD_PWR  = 26;  // 电源控制（可直接 3.3V）
+const int8_t  PIN_EPD_PWR  = -1;  // 板载驱动无独立 EPD 供电控制脚
 // I2C 引脚（SHT30 温湿度传感器与 RTC 共用）
-const uint8_t PIN_I2C_SDA = 17;
-const uint8_t PIN_I2C_SCL = 16;
+const uint8_t PIN_I2C_SDA = 21;
+const uint8_t PIN_I2C_SCL = 22;
 const uint8_t SHT30_ADDRESS = 0x44; // SHT30 默认地址
 const uint8_t RTC_ADDRESS   = 0x51; // BL8025C/PCF8563 地址
 
 // WIFI
-const char *WIFI_SSID     = "ssid";
-const char *WIFI_PASSWORD = "password";
+const char *WIFI_SSID     = "抹茶拿铁";
+const char *WIFI_PASSWORD = "15083787416";
 const unsigned long WIFI_TIMEOUT = 10000; // 毫秒，WiFi 连接超时时间
 
 // HTTP
@@ -51,25 +51,25 @@ const unsigned HTTP_CLIENT_TCP_TIMEOUT = 10000; // 毫秒
 
 // 中国气象台 API
 // 参考：https://cn.apihz.cn/api/tianqi/tqyb.php
-const String CMA_PID      = "your_pid";        // 用户 PID
-const String CMA_KEY      = "your_key";        // 用户 KEY
-const String CMA_PROVINCE = "省份";           // 省
-const String CMA_CITY     = "城市";           // 市
-const String CMA_PLACE    = "区县";           // 区/县
+const String CMA_PID      = "10014312";         // 用户 ID（接口参数名为 id）
+const String CMA_KEY      = "a62c9ebf8f22bdaa8ff3d136e0d9ca75";        // 用户 KEY
+const String CMA_PROVINCE = "江西";           // 省
+const String CMA_CITY     = "南昌";           // 市
+const String CMA_PLACE    = "南昌";           // 区/县
 const String CMA_ENDPOINT = "cn.apihz.cn";    // 接口域名
 
 // 位置
 // 设置你的纬度和经度。
 // （用于向中国气象台 API 请求天气数据）
-const String LAT = "40.7128";
-const String LON = "-74.0060";
+const String LAT = "28.7040";
+const String LON = "115.9290";
 // 城市名称，将显示在屏幕右上角。
-const String CITY_STRING = "New York";
+const String CITY_STRING = "南昌";
 
 // 时间
 // 时区列表见
 // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-const char *TIMEZONE = "EST5EDT,M3.2.0,M11.1.0";
+const char *TIMEZONE = "CST-8";
 // 显示日出/日落时间时使用的时间格式（最多 11 个字符）。
 // 更多格式化信息见
 // https://man7.org/linux/man-pages/man3/strftime.3.html
