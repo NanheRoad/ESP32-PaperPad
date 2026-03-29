@@ -34,6 +34,8 @@ const int8_t  PIN_EPD_PWR  = -1;  // 板载驱动无独立 EPD 供电控制脚
 // I2C 引脚（SHT30 温湿度传感器与 RTC 共用）
 const uint8_t PIN_I2C_SDA = 21;
 const uint8_t PIN_I2C_SCL = 22;
+// KEY3 配网按键（如与实际不符，请按原理图改此 GPIO）
+const int8_t PIN_KEY3 = 35;
 const uint8_t SHT30_ADDRESS = 0x44; // SHT30 默认地址
 const uint8_t RTC_ADDRESS   = 0x51; // BL8025C/PCF8563 地址
 

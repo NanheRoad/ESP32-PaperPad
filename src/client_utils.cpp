@@ -75,11 +75,11 @@ static String urlEncode(const String &in)
  *
  * 返回WiFi连接状态
  */
-wl_status_t startWiFi(int &wifiRSSI)
+wl_status_t startWiFi(int &wifiRSSI, const char *ssid, const char *password)
 {
   WiFi.mode(WIFI_STA);
-  Serial.printf("%s '%s'", TXT_CONNECTING_TO, WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.printf("%s '%s'", TXT_CONNECTING_TO, ssid);
+  WiFi.begin(ssid, password);
 
   // 如果WiFi在WIFI_TIMEOUT毫秒内未连接则超时
   unsigned long timeout = millis() + WIFI_TIMEOUT;
@@ -100,7 +100,7 @@ wl_status_t startWiFi(int &wifiRSSI)
   }
   else
   {
-    Serial.printf("%s '%s'\n", TXT_COULD_NOT_CONNECT_TO, WIFI_SSID);
+    Serial.printf("%s '%s'\n", TXT_COULD_NOT_CONNECT_TO, ssid);
   }
   return connection_status;
 } // startWiFi

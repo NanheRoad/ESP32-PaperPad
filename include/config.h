@@ -243,6 +243,7 @@ extern const uint8_t PIN_EPD_MOSI;
 extern const int8_t PIN_EPD_PWR;
 extern const uint8_t PIN_I2C_SDA;
 extern const uint8_t PIN_I2C_SCL;
+extern const int8_t PIN_KEY3;
 extern const uint8_t SHT30_ADDRESS;
 extern const uint8_t RTC_ADDRESS;
 extern const char *WIFI_SSID;
